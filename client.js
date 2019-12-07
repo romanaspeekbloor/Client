@@ -34,24 +34,24 @@ const sample = (cmd) => new Promise(r => {
 
 ws.on('message', async (msg) => {
   const d = JSON.parse(msg);
+  console.log({ d });
   const unixTS = new Date().getTime();
   let now = Now();
   let c = 0n;
   const offset = unixTS - d.serverTime;
   const mark = (d.execT - offset) * 1000000;
-  // const delay = await new Promise(r => setTimeout(r, d.execT - t));
   let end = now;;
-  while (mark > c) {
+
+  while (mark >= c) {
     if (now > end) {
       c += now - end;
       end = now;
-    } else {
-     now = Now(); 
     }
+    now = Now(); 
   }
 
   console.log('off: ', offset, 'now: ', now, ' end: ', end, ' st: ', d.serverTime, d.execT, 'c: ', c, '\nmark: ', mark);
-  const calcLag = parseInt(c) - mark;
+  const execOffset = parseInt(c) - mark;
   const startedAt = new Date().getTime();
   const cmd = 'rtl_power -f 153084000:153304000:0.8k -g 35 -i 0 -e -1 2>&1';
   const raw = await sample(cmd);
@@ -60,7 +60,7 @@ ws.on('message', async (msg) => {
   const res = {
     name: ENV.NAME,
     msg: 'Sampling done!',
-    calcLag,
+    execOffset,
     startTime: unixTS, 
     samplingTime: {
       unit: 'ns',
@@ -72,8 +72,6 @@ ws.on('message', async (msg) => {
     timestamp: new Date().getTime()
   };
 
-
-  console.log('complete!');
   ws.send(JSON.stringify(res));
 });
 
