@@ -34,7 +34,10 @@ const sample = (cmd) => new Promise(r => {
 
 ws.on('message', async (msg) => {
   const d = JSON.parse(msg);
-  console.log({ d });
+  if (d.actions) {
+    // TODO actions
+    return console.log('actions:' , d.actions, { d });
+  }
   const unixTS = new Date().getTime();
   let now = Now();
   let c = 0n;
@@ -64,7 +67,7 @@ ws.on('message', async (msg) => {
     startTime: unixTS, 
     samplingTime: {
       unit: 'ns',
-      t
+      time: t - execOffset
     },
     startedAt,
     data: err ? null : out,
