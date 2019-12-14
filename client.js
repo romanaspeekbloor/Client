@@ -2,11 +2,13 @@
 // Imports/Dependencies
 const WebSocket = require('ws');
 const exec = require('child_process').exec;
+const ENV = process.env;
 
-const ws = new WebSocket('ws://192.168.10.242:9000');
-var _conT = 0;
-var _date = new Date();
+const ws = new WebSocket(ENV.WS_SERVER);
 
+ws.on('open', () => {
+  ws.send(`${ENV.NAME} has connected.`);
+});
 
 const convertNs = (t, ns) => {
   const units = ({
@@ -21,10 +23,12 @@ const convertNs = (t, ns) => {
 const Now = () => process.hrtime.bigint();
 
 const sample = (cmd) => new Promise(r => {
+  const start = Now();
   console.log('scanning...');
   exec(cmd, (err, out) => {
-    if (err) return r({ err, out });
-    r({ err, out }); 
+    const t = parseInt(Now() - start);
+    if (err) return r({ err, out, t });
+    r({ err, out, t }); 
   });
 });
 
@@ -56,42 +60,47 @@ ws.on('open', () => {
 
 ws.on('message', async (msg) => {
   const d = JSON.parse(msg);
-  if (d.actions) return check(d);
-  let unixTS = new Date().getTime();
+  if (d.actions) {
+    // TODO actions
+    return console.log('actions:' , d.actions, { d });
+  }
+  const unixTS = new Date().getTime();
   let now = Now();
-  let end = now; 
   let c = 0n;
   const offset = unixTS - d.serverTime;
   const mark = (d.execT - offset) * 1000000;
-  // const delay = await new Promise(r => setTimeout(r, d.execT - t));
-  for (;mark > c;) {
-    if (end < now) { 
+  let end = now;;
+
+  while (mark >= c) {
+    if (now > end) {
       c += now - end;
       end = now;
-    } else {
-      now = Now();
     }
+    now = Now(); 
   }
-  console.log('off: ', offset, 'now: ', now, ' st: ', d.serverTime, d.execT, ' ts: ', unixTS, 'c: ', c);
+
+  console.log('off: ', offset, 'now: ', now, ' end: ', end, ' st: ', d.serverTime, d.execT, 'c: ', c, '\nmark: ', mark);
+  const execOffset = parseInt(c) - mark;
   const startedAt = new Date().getTime();
   const cmd = 'rtl_power -f 153084000:153304000:0.8k -g 35 -i 0 -e -1 2>&1';
   const raw = await sample(cmd);
-  const { err, out } = raw;
-  const samplingTime = convertNs('micro', parseInt(Now() - now));
+  const { err, out, t} = raw;
 
   const res = {
-    name: 'RX 3',
+    name: ENV.NAME,
     msg: 'Sampling done!',
+    execOffset,
     startTime: unixTS, 
-    startedAt, 
-    samplingTime, 
+    samplingTime: {
+      unit: 'ns',
+      time: t - execOffset
+    },
+    startedAt,
     data: err ? null : out,
     error: err ? 'error...' : null,
     timestamp: new Date().getTime()
   };
 
-
-  console.log('complete!');
   ws.send(JSON.stringify(res));
 });
 
