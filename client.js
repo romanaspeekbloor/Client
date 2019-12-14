@@ -11,7 +11,7 @@ const convertNs = (t, ns) => {
     ms: ns / 1000000,
   });
   // TODO check if possible to convert to max int
-  return parseInt(units[t]);
+  return Math.round(units[t]);
 };
 
 const Now = () => process.hrtime.bigint();
