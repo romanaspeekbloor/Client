@@ -29,7 +29,7 @@ const sample = (cmd) => new Promise(r => {
 // Events 
 // =====================================================
 io.on('connect', () => {
-  console.log('connected');
+  io.emit('onClientConnect', `${ENV.NAME} has connected.`);
 });
 
 io.on('setClient', (config) => {
