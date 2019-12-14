@@ -1,14 +1,8 @@
 #!/usr/bin/env node
 // Imports/Dependencies
-const WebSocket = require('ws');
+const io = require('socket.io-client')('http://192.168.10.242:9955');
 const exec = require('child_process').exec;
 const ENV = process.env;
-
-const ws = new WebSocket(ENV.WS_SERVER);
-
-ws.on('open', () => {
-  ws.send(`${ENV.NAME} has connected.`);
-});
 
 const convertNs = (t, ns) => {
   const units = ({
@@ -32,41 +26,26 @@ const sample = (cmd) => new Promise(r => {
   });
 });
 
-const SetRXTime = (data) => {
-  console.log({ data });
-  const lag = convertNs('ms', parseInt(Now() - _conT));
-  _date.setTime(data.timestamp - lag);
-  console.log({ lag });
-  if (data.timestamp) console.log('got ts'); 
-};
-
-const check = (msg) => {
-  if (!msg.actions) return console.log('no action found');
-  const { actions, params, ...data } = msg;
-  if (params) data.params = params
-  const tasks = {
-    setTime: SetRXTime(data)
-  }
-  return ({
-
-  });
-}
-
-// TODO something like router and route to function depending on events
-ws.on('open', () => {
-  _conT = Now();
-  ws.send('RX3 connected');
+// Events 
+// =====================================================
+io.on('connect', () => {
+  console.log('connected');
 });
 
-ws.on('message', async (msg) => {
+io.on('setClient', (config) => {
+  // TODO client configuration 'init'
+  console.log({ config });
+});
+
+// getSamples event handler
+io.on('getSamples', async (msg) => {
   const d = JSON.parse(msg);
   if (d.actions) {
     // TODO actions
     return console.log('actions:' , d.actions, { d });
   }
   const unixTS = new Date().getTime();
-  let now = Now();
-  let c = 0n;
+  let now = Now(), c = 0n;
   const offset = unixTS - d.serverTime;
   const mark = (d.execT - offset) * 1000000;
   let end = now;;
@@ -90,7 +69,7 @@ ws.on('message', async (msg) => {
     name: ENV.NAME,
     msg: 'Sampling done!',
     execOffset,
-    startTime: unixTS, 
+    serverMsgAt: unixTS, 
     samplingTime: {
       unit: 'ns',
       time: t - execOffset
@@ -101,6 +80,6 @@ ws.on('message', async (msg) => {
     timestamp: new Date().getTime()
   };
 
-  ws.send(JSON.stringify(res));
+  io.emit('getSamples', JSON.stringify(res));
 });
 
