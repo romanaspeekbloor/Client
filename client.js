@@ -2,7 +2,19 @@
 // Imports/Dependencies
 const io = require('socket.io-client')('http://192.168.10.242:9955');
 const exec = require('child_process').exec;
+const usb = require('usb');
 const ENV = process.env;
+
+/**
+ * get usb device address
+ */
+const getUSBAddress = (id) => {
+  const details = usb.getDeviceList().filter(u => u.deviceDescriptor.idVendor === id)[0];
+  let addr = details.deviceAddress;
+  return (addr >= 10) ? `0${addr}` : `00${addr}`;
+};
+
+console.log(getUSBAddress(3034));
 
 const convertNs = (t, ns) => {
   const units = ({

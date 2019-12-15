@@ -2,6 +2,8 @@
 [0.0.2]
 ### Updates
 - Updated client to use socket.io events
+- Installed npm usb package
+- function to get usb bus address
 
 [0.0.1]
 ### Updates
