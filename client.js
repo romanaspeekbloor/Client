@@ -7,6 +7,7 @@ const ENV = process.env;
 
 /**
  * get usb device address
+ * id: {string/number} device vendorId (got to be in decimal)
  */
 const getUSBAddress = (id) => {
   const details = usb.getDeviceList().filter(u => u.deviceDescriptor.idVendor === id)[0];
@@ -50,17 +51,13 @@ io.on('setClient', (config) => {
 });
 
 // getSamples event handler
-io.on('getSamples', async (msg) => {
-  const d = JSON.parse(msg);
-  if (d.actions) {
-    // TODO actions
-    return console.log('actions:' , d.actions, { d });
-  }
+io.on('getSamples', async (d) => {
+  // TODO d validation, emit event on error
   const unixTS = new Date().getTime();
   let now = Now(), c = 0n;
   const offset = unixTS - d.serverTime;
   const mark = (d.execT - offset) * 1000000;
-  let end = now;;
+  let end = now;
 
   while (mark >= c) {
     if (now > end) {
