@@ -54,26 +54,24 @@ io.on('setClient', (config) => {
 // getSamples event handler
 io.on('getSamples', async (d) => {
   // TODO d validation, emit event on error
+  await new Promise(r => setTimeout(r, 15));
   let now = Now(), c = 0n;
-  await new Promise(r => setTimeout(r, 20));
-  const offset = (100 - (new Date().getTime() - d.serverTime)) * 1000000;
+  const req = d.data ? d.data.filter(d => d.name === ENV.NAME)[0] : null;
+  const offset = req ? now - BigInt(req.benchMark) : (new Date().getTime() - d.serverTime) * 1000000;
   let end = now;
 
   while (offset >= c) {
     if (now > end) {
       c += now - end;
       end = now;
+    } else { 
+      now = Now(); 
     }
-    now = Now(); 
   }
 
-  const req = d.data ? d.data.filter(d => d.name === ENV.NAME)[0] : null;
-
-  const start = req ? Now() - BigInt(req.benchMark) : '';
-  console.log({ start });
 
   const startedAt = new Date().getTime(); 
-  console.log('off: ', offset, 'now: ', now, ' end: ', end, ' st: ', 'c: ', c / 1000000n);
+  console.log('off: ', parseInt(offset) / 1000000, 'now: ', now, ' end: ', end, ' st: ', 'c: ', c / 1000000n);
   const cmd = 'rtl_power -f 153084000:153304000:0.8k -g 35 -i 0 -e -1 2>&1';
   const raw = await sample(cmd);
   const { err, out, t} = raw;
