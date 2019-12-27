@@ -67,6 +67,11 @@ io.on('getSamples', async (d) => {
     now = Now(); 
   }
 
+  const req = d.data ? d.data.filter(d => d.name === ENV.NAME)[0] : null;
+
+  const start = req ? Now() - BigInt(req.benchMark) : '';
+  console.log({ start });
+
   const startedAt = new Date().getTime(); 
   console.log('off: ', offset, 'now: ', now, ' end: ', end, ' st: ', 'c: ', c / 1000000n);
   const cmd = 'rtl_power -f 153084000:153304000:0.8k -g 35 -i 0 -e -1 2>&1';
