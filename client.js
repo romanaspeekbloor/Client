@@ -55,7 +55,8 @@ io.on('setClient', (config) => {
 io.on('getSamples', async (d) => {
   // TODO d validation, emit event on error
   let now = Now(), c = 0n;
-  const offset = (new Date().getTime() - d.serverTime) * 1000000;
+  await new Promise(r => setTimeout(r, 42));
+  const offset = (100 - (new Date().getTime() - d.serverTime)) * 1000000;
   let end = now;
 
   while (offset >= c) {
