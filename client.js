@@ -55,9 +55,7 @@ io.on('setClient', (config) => {
 io.on('getSamples', async (d) => {
   // TODO d validation, emit event on error
   let now = Now(), c = 0n;
-  const req = d.data ? d.data.filter(d => d.name === ENV.NAME)[0] : 'no data' ;
-  console.log({ req })
-  const offset = req.benchMark ? now - BigInt(req.benchMark) : BigInt((new Date().getTime() - d.serverTime) * 1000000);
+  const offset = (new Date().getTime() - d.serverTime) * 1000000;
   let end = now;
 
   while (offset >= c) {
@@ -68,11 +66,13 @@ io.on('getSamples', async (d) => {
     now = Now(); 
   }
 
-  const startedAt = d.serverTime + parseInt(c / 1000000n);
-  console.log('off: ', offset, 'now: ', now, ' end: ', end, ' st: ', 'c: ', c);
+  const startedAt = d.serverTime + parseInt(c / 1000000n, 10);
+  console.log('off: ', offset, 'now: ', now, ' end: ', end, ' st: ', 'c: ', c / 1000000n);
   const cmd = 'rtl_power -f 153084000:153304000:0.8k -g 35 -i 0 -e -1 2>&1';
   const raw = await sample(cmd);
   const { err, out, t} = raw;
+
+  const newBenchMark = Now().toString();
 
   const res = {
     name: ENV.NAME,
@@ -85,7 +85,7 @@ io.on('getSamples', async (d) => {
     data: err ? null : out,
     error: err ? 'error...' : null,
     timestamp: new Date().getTime(),
-    benchMark: Now().toString()
+    benchMark: newBenchMark
   };
 
   io.emit('getSamples', JSON.stringify(res));
