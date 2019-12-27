@@ -70,7 +70,7 @@ io.on('getSamples', async (d) => {
   }
 
 
-  const startedAt = new Date().getTime(); 
+  const startedAt = new Date().getTime() - parseInt(c / 1000000n); 
   console.log('off: ', parseInt(offset) / 1000000, 'now: ', now, ' end: ', end, ' st: ', 'c: ', c / 1000000n);
   const cmd = 'rtl_power -f 153084000:153304000:0.8k -g 35 -i 0 -e -1 2>&1';
   const raw = await sample(cmd);
