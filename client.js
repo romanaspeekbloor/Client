@@ -5,6 +5,8 @@ const exec = require('child_process').exec;
 const usb = require('usb');
 const ENV = process.env;
 
+let _clientDelay = 100000000;
+
 /**
  * get usb device address
  * id: {string/number} device vendorId (got to be in decimal)
@@ -54,13 +56,16 @@ io.on('setClient', (config) => {
 // getSamples event handler
 io.on('getSamples', async (d) => {
   // TODO d validation, emit event on error
-  await new Promise(r => setTimeout(r, 15));
+  await new Promise(r => setTimeout(r, 55));
   let now = Now(), c = 0n;
+  // Check request and filter by name
   const req = d.data ? d.data.filter(d => d.name === ENV.NAME)[0] : null;
+  // Calculate offset (latency)
   let offset = req ? now - BigInt(req.benchMark) : (new Date().getTime() - d.serverTime) * 1000000;
   let end = now;
 
-  while (100000000n - BigInt(offset) >= c) {
+  // Have a bit of delay for compensation
+  while (_clientDelay - parseInt(offset) >= c) {
     if (now > end) {
       c += now - end;
       end = now;
@@ -69,8 +74,8 @@ io.on('getSamples', async (d) => {
     }
   }
 
-  const startedAt = new Date().getTime(); 
-  console.log('off: ', parseInt(offset) / 1000000, 'now: ', now, ' end: ', end, ' st: ', 'c: ', parseInt(c) / 1000000);
+  const startedAt = new Date().getTime();',  
+  console.log(parseInt(c) / 1000000, { d });
   const cmd = 'rtl_power -f 153084000:153304000:0.8k -g 35 -i 0 -e -1 2>&1';
   const raw = await sample(cmd);
   const { err, out, t} = raw;
@@ -82,13 +87,13 @@ io.on('getSamples', async (d) => {
     msg: 'Sampling done!',
     samplingTime: {
       unit: 'ns',
-      time: (Now() - now).toString() 
+      time: t 
     },
     startedAt,
     data: err ? null : out,
     error: err ? 'error...' : null,
     timestamp: new Date().getTime(),
-    benchMark: newBenchMark
+    benchMark: Now().toString() 
   };
 
   io.emit('getSamples', JSON.stringify(res));
