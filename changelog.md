@@ -1,4 +1,7 @@
 # Change Log
+[0.0.3]
+### Updates
+- Updated time sync, sends benchmark along 'getSamples' response;
 [0.0.2]
 ### Updates
 - Updated client to use socket.io events
