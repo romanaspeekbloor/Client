@@ -3,6 +3,7 @@
 const io = require('socket.io-client')('http://192.168.10.242:9955');
 const exec = require('child_process').exec;
 const usb = require('usb');
+const convertHR = require('convert-hrtime');
 const ENV = process.env;
 
 let _clientDelay = 100000000;
@@ -53,19 +54,25 @@ io.on('setClient', (config) => {
   console.log({ config });
 });
 
+// New way of calculating offset
+const NowHR = () => process.hrtime();
+const DiffHR = (t) => convertHR(process.hrtime(t)).nanoseconds;
+
 // getSamples event handler
 io.on('getSamples', async (d) => {
-  // TODO d validation, emit event on error
-  await new Promise(r => setTimeout(r, 55));
+  await new Promise(r => setTimeout(r, 25));
   let now = Now(), c = 0n;
   // Check request and filter by name
   const req = d.data ? d.data.filter(d => d.name === ENV.NAME)[0] : null;
+
   // Calculate offset (latency)
-  let offset = req ? now - BigInt(req.benchMark) : (new Date().getTime() - d.serverTime) * 1000000;
+  let offset = req ? DiffHR(req.benchMark) : (new Date().getTime() - d.serverTime) * 1000000;
+  if (req && req.benchMark) offset;
+  console.log('delay: ', _clientDelay - offset)
   let end = now;
 
   // Have a bit of delay for compensation
-  while (_clientDelay - parseInt(offset) >= c) {
+  while (_clientDelay - offset >= c) {
     if (now > end) {
       c += now - end;
       end = now;
@@ -74,13 +81,12 @@ io.on('getSamples', async (d) => {
     }
   }
 
+  console.log({ c, offset, req });
+
   const startedAt = new Date().getTime();  
-  console.log(parseInt(c) / 1000000, { d });
   const cmd = 'rtl_power -f 153084000:153304000:0.8k -g 35 -i 0 -e -1 2>&1';
   const raw = await sample(cmd);
   const { err, out, t} = raw;
-
-  const newBenchMark = Now().toString();
 
   const res = {
     name: ENV.NAME,
@@ -93,7 +99,7 @@ io.on('getSamples', async (d) => {
     data: err ? null : out,
     error: err ? 'error...' : null,
     timestamp: new Date().getTime(),
-    benchMark: Now().toString() 
+    benchMark: NowHR()
   };
 
   io.emit('getSamples', JSON.stringify(res));
