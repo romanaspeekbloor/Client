@@ -67,8 +67,8 @@ io.on('getSamples', async (d) => {
 
   // Calculate offset (latency)
   let offset = req ? DiffHR(req.benchMark) : (new Date().getTime() - d.serverTime) * 1000000;
-  if (req && req.benchMark) offset;
-  console.log('delay: ', _clientDelay - offset)
+
+  if (req && req.benchMark) offset -= 7000000000;
   let end = now;
 
   // Have a bit of delay for compensation
