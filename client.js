@@ -60,13 +60,13 @@ const DiffHR = (t) => convertHR(process.hrtime(t)).nanoseconds;
 
 // getSamples event handler
 io.on('getSamples', async (d) => {
-  await new Promise(r => setTimeout(r, 25));
+//  await new Promise(r => setTimeout(r, 25));
   let now = Now(), c = 0n;
   // Check request and filter by name
   const req = d.data ? d.data.filter(d => d.name === ENV.NAME)[0] : null;
 
   // Calculate offset (latency)
-  let offset = req ? DiffHR(req.benchMark) : (new Date().getTime() - d.serverTime) * 1000000;
+  let offset = /*req ? DiffHR(req.benchMark) :*/ (new Date().getTime() - d.serverTime) * 1000000;
 
   if (req && req.benchMark) offset -= 7000000000;
   let end = now;
@@ -81,9 +81,9 @@ io.on('getSamples', async (d) => {
     }
   }
 
-  console.log({ c, offset, req });
 
   const startedAt = new Date().getTime();  
+  console.log({ c, offset, req });
   const cmd = 'rtl_power -f 153084000:153304000:0.8k -g 35 -i 0 -e -1 2>&1';
   const raw = await sample(cmd);
   const { err, out, t} = raw;
