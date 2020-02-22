@@ -46,7 +46,15 @@ const sample = (cmd) => new Promise(r => {
 // Events 
 // =====================================================
 io.on('connect', () => {
-  io.emit('onClientConnect', ENV.NAME, `${ENV.NAME} has connected.`);
+  // TODO dynamically pull details from hardware
+  // - include usbAddress
+  const clientConfig = {
+    device_type: 'rx',
+    device_name: ENV.NAME,
+    device_model: 'PI 3',
+    device_make: 'raspberry',
+  };
+  io.emit('onClientConnect', ENV.NAME, clientConfig);
 });
 
 io.on('setClient', (config) => {
@@ -61,6 +69,7 @@ const DiffHR = (t) => convertHR(process.hrtime(t)).nanoseconds;
 // getSamples event handler
 io.on('getSamples', async (d) => {
 //  await new Promise(r => setTimeout(r, 25));
+  console.log({ d });
   let now = Now(), c = 0n;
   // Check request and filter by name
   const req = d.data ? d.data.filter(d => d.name === ENV.NAME)[0] : null;
