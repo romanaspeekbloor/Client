@@ -92,10 +92,9 @@ io.on('getSamples', async (d) => {
   }
 
 
-  const startedAt = d.serverTime + Math.floor(parseInt(c) / 1000000);  
   console.log('server time: ', d.serverTime, Math.floor(parseInt(c) / 1000000));
   console.log({ c, offset, req });
-  const cmd = 'rtl_power -f 153084000:153104000:8k -g 35 -i 0 -e -1 2>&1';
+  const cmd = 'rtl_power -f 88084000:88024000:8k -g 35 -i 0 -e -1 2>&1';
   const raw = await sample(cmd);
   const { err, out, t} = raw;
 
@@ -108,7 +107,6 @@ io.on('getSamples', async (d) => {
       us: t / 1000,
       ms: t / 1000000,
     },
-    startedAt,
     data: err ? null : out,
     error: err ? 'error...' : null,
     timestamp: new Date().getTime(),
