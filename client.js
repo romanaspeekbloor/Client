@@ -35,7 +35,6 @@ const Now = () => process.hrtime.bigint();
 
 const sample = (cmd) => new Promise(r => {
   const start = Now();
-  console.log('scanning...');
   exec(cmd, (err, out) => {
     const t = parseInt(Now() - start);
     if (err) return r({ err, out, t });
@@ -68,17 +67,19 @@ const DiffHR = (t) => convertHR(process.hrtime(t)).nanoseconds;
 
 // getSamples event handler
 io.on('getSamples', async (d) => {
+  if (!d.data.length) return io.emit('getSamples', JSON.stringify('yo'));
 //  await new Promise(r => setTimeout(r, 25));
-  console.log({ d });
   let now = Now(), c = 0n;
   // Check request and filter by name
   const req = d.data ? d.data.filter(d => d.name === ENV.NAME)[0] : null;
 
   // Calculate offset (latency)
-  let offset = /*req ? DiffHR(req.benchMark) :*/ (new Date().getTime() - d.serverTime) * 1000000;
+  let offset = req && req.benchMark ? DiffHR(req.benchMark) : (new Date().getTime() - d.serverTime) * 1000000;
 
   if (req && req.benchMark) offset -= 7000000000;
-  let end = now;
+  if (req && req.ingestT) offset -= req.ingestT;
+  
+  let end = Now();
 
   // Have a bit of delay for compensation
   while (_clientDelay - offset >= c) {
@@ -91,18 +92,21 @@ io.on('getSamples', async (d) => {
   }
 
 
-  const startedAt = new Date().getTime();  
+  const startedAt = d.serverTime + Math.floor(parseInt(c) / 1000000);  
+  console.log('server time: ', d.serverTime, Math.floor(parseInt(c) / 1000000));
   console.log({ c, offset, req });
-  const cmd = 'rtl_power -f 153084000:153304000:0.8k -g 35 -i 0 -e -1 2>&1';
+  const cmd = 'rtl_power -f 153084000:153104000:8k -g 35 -i 0 -e -1 2>&1';
   const raw = await sample(cmd);
   const { err, out, t} = raw;
 
   const res = {
     name: ENV.NAME,
     msg: 'Sampling done!',
+    elapsed: c.toString(),
     samplingTime: {
-      unit: 'ns',
-      time: t 
+      ns: t,
+      us: t / 1000,
+      ms: t / 1000000,
     },
     startedAt,
     data: err ? null : out,
