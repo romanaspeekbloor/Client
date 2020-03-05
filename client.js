@@ -94,7 +94,7 @@ io.on('getSamples', async (d) => {
 
   console.log('server time: ', d.serverTime, Math.floor(parseInt(c) / 1000000));
   console.log({ c, offset, req });
-  const cmd = 'rtl_power -f 880184000:88024000:0.1k -g 80 -i 0 -e -1 2>&1';
+  const cmd = 'rtl_power -f 88184000:88204000:0.1k -g 80 -i 0 -e -1 2>&1';
   const raw = await sample(cmd);
   const { err, out, t} = raw;
 
