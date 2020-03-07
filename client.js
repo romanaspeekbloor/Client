@@ -79,10 +79,11 @@ io.on('getSamples', async (d) => {
   if (req && req.benchMark) offset -= 7000000000;
   if (req && req.ingestT) offset -= req.ingestT;
   
-  let end = Now();
+  let end = now;
 
   // Have a bit of delay for compensation
-  while (_clientDelay - offset >= c) {
+  console.log(_clientDelay - offset);
+  while (Math.abs(_clientDelay - offset) >= c) {
     if (now > end) {
       c += now - end;
       end = now;
@@ -94,7 +95,7 @@ io.on('getSamples', async (d) => {
 
   console.log('server time: ', d.serverTime, Math.floor(parseInt(c) / 1000000));
   console.log({ c, offset, req });
-  const cmd = 'rtl_power -f 88184000:88204000:1k -g 0 -i 0 -e -1 2>&1';
+  const cmd = 'rtl_power -f 88194000:88204000:4k -g 90 -i 0 -e -1 2>&1';
   const raw = await sample(cmd);
   const { err, out, t} = raw;
 
