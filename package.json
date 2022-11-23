@@ -11,7 +11,7 @@
   "dependencies": {
     "convert-hrtime": "^3.0.0",
     "rtl-sdr": "^0.1.4",
-    "socket.io": "^2.3.0",
+    "socket.io": "^2.5.0",
     "socket.io-client": "^2.3.0",
     "usb": "^1.6.2",
     "ws": "^7.2.0"
